@@ -27,4 +27,8 @@ public class GameManager : MonoBehaviour
     public void AtkToEnemy(float weaponDmg, Collider2D enemy){  //Player로 부터 공격력과 감지된 적의 collider를 매개변수로 받음
         enemy.GetComponent<Enemy>().Damaged(weaponDmg);         //공격력을 매개변수로하여 감지된 적의 Damaged를 호출
     }
+
+    public float DamagedFromEnemy(Collision2D enemy){
+        return enemy.collider.GetComponent<Enemy>().atkPower;
+    }
 }

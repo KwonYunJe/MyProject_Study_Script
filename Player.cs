@@ -24,7 +24,9 @@ public class Player : MonoBehaviour
     public float checkRadius;   //감지 반경
     public float distance;      //감지거리
     public float jumpPower;     //점프 파워
-    public float HP;
+    public float HP;            //체력
+    public float def;           //방어력
+    public float weaponDmg;     //무기 공격력
 
     public Vector2 perp;
 
@@ -42,7 +44,6 @@ public class Player : MonoBehaviour
     public float atkMaxTime;  //다음 공격까지 공격을 할 수 없는 시간을 저장
     public Transform atkPos;    //공격이 실행될 위치
     public Vector2 atkBoxSize;  //공격이 실행될 크기
-    public float weaponDmg;     //무기 공격력
     public float face;    //공격 방향
     public float damageShock;   //피격시 튕겨나가는 힘
 
@@ -250,9 +251,9 @@ public class Player : MonoBehaviour
 
     void Face(){
         if((atkPos.localPosition.x < 0 && inputX ==1) || (atkPos.localPosition.x > 0 && inputX == -1)){
-            Debug.Log(atkPos.localPosition.x + " <<기존|새로>> " + new Vector3(-atkPos.position.x, atkPos.position.y, atkPos.position.z));
+            //Debug.Log(atkPos.localPosition.x + " <<기존|새로>> " + new Vector3(-atkPos.position.x, atkPos.position.y, atkPos.position.z));
             atkPos.localPosition = new Vector3(-atkPos.localPosition.x, atkPos.localPosition.y, atkPos.localPosition.z);
-            Debug.Log(atkPos.position.x);
+            //Debug.Log(atkPos.position.x);
         }
         else{
             return;
@@ -260,11 +261,24 @@ public class Player : MonoBehaviour
     }
 
     void Damaged(Collision2D other){     //적에게 맞았을 때
+        float damage = gameManager.DamagedFromEnemy(other);
+        rigid.velocity = Vector2.zero;  //이전 연산되고 있던 속도를 무효
         gameObject.layer = 9;
         sprender.color = new Color( 120/255f , 120/255f, 120/255f);
-        HP = HP - other.gameObject.GetComponent<Enemy>().atkPower;//플레이어 체력감소
-        // int dirc = transform.position.x - other.gameObject.GetComponent<Enemy>().rigid.position.x > 0 ? 1 : -1;     //(현재 플레이어의 좌표 - 부딪힌 오브젝트의 좌표) 가 양수일때는 1, 음수일때는 -1
-        // rigid.AddForce(new Vector2(dirc * 10, 1) * damageShock ,ForceMode2D.Impulse);      //위의 방향(dirc)대로 힘을 가함 
+        if(damage <= def / 15){
+            HP = HP - 0;
+        }else{
+            if(HP > HP - (damage - def / 15)){
+                HP = HP - (damage - def / 15);//플레이어 체력감소
+            }else{
+                //Destroy
+            }
+        }
+        
+        int dirc = transform.position.x - other.gameObject.GetComponent<Enemy>().rigid.position.x > 0 ? 1 : -1;     //(현재 플레이어의 좌표 - 부딪힌 오브젝트의 좌표) 가 양수일때는 1, 음수일때는 -1
+        //Debug.Log(dirc);
+        rigid.AddForce(new Vector2(dirc * 100000, 1) * damageShock ,ForceMode2D.Impulse);      //위의 방향(dirc)대로 힘을 가함 
+        Debug.Log(new Vector2(dirc * 100000, 1));
         Invoke("OffDamaged", 0.5f); 
     }
 
