@@ -8,6 +8,10 @@ public class Enemy : MonoBehaviour
     public GameManager gameManager;
     public GameObject groundCheckBox;
     public GameObject cliffCheckBox;
+    public float cliffCheckDistance;
+    public float cliffCheckStartSpot;
+    public RaycastHit2D cliffCheck;
+
     public Rigidbody2D rigid;
     SpriteRenderer sprender;
 
@@ -30,15 +34,16 @@ public class Enemy : MonoBehaviour
     public float angle;    //맞닿은 표면과 수직선과의 각도를 저장
     public Vector2 perp;
     public RaycastHit2D groundCheck;
-    public RaycastHit2D cliffCheck;
-
+    
+    public bool isCliff;
+    public Vector2 befJumpPos;
 
     private void Start() {
         rigid = GetComponent<Rigidbody2D>();
         sprender = GetComponent<SpriteRenderer>();
         Invoke("MonsterMoveStatus", 1f);
         MonsterJumpPer();
-        
+        face = 1;
     }
     private void Awake() {
         
@@ -101,14 +106,18 @@ public class Enemy : MonoBehaviour
         int jumpPer = Random.Range(0,2);
         //Debug.Log("jumpPer : "+ jumpPer);
         if(jumpPer == 1){
+            if(!isJump){
+                befJumpPos = rigid.position; //점프하기 전 위치를 기록
+            }
             MonsterJump();
         }
         Invoke("MonsterJumpPer", 3);
     }
 
     void Face(){
-        if((moveDir == 1 && cliffCheckBox.transform.localPosition.x < 0) || (moveDir == -1 && cliffCheckBox.transform.localPosition.x > 0)){
-            cliffCheckBox.transform.localPosition = new Vector2(-cliffCheckBox.transform.localPosition.x, cliffCheckBox.transform.localPosition.y);
+        if(moveDir < 0 && face > 0 || moveDir > 0 && face < 0){
+            face = -face;
+            Debug.Log("face : " + face);
         }else{
             return;
         }
@@ -142,12 +151,38 @@ public class Enemy : MonoBehaviour
     }
 
     void DetectCliff(){
-        cliffCheck = Physics2D.BoxCast(cliffCheckBox.transform.position, cliffCheckBox.transform.localScale, 0, Vector2.down, 0);
-        Debug.Log(cliffCheck.collider.name);/////////////////////////////////////////////////////////////////////////////////////////감지가 안됨 
-        if(isGround && !cliffCheck){
-            Debug.Log("Cliff Detected!");
-            rigid.velocity = new Vector2(0,rigid.velocity.y);
-            Invoke("MonsterMoveStatus", 1f);
+        Vector2 start = new Vector2(gameObject.transform.position.x, gameObject.transform.position.y);  //ray의 시작 좌표값
+        // if(isJump){
+        //     start = new Vector2(gameObject.transform.position.x, befJumpPos.y);                         //점프 시 ray의 y값은 고정되도록 설정(MonsterJumpPer로 부터)
+        // }
+        if(isSlope){
+            if((face > 0 && perp.y < 0) || (face < 0 && perp.y > 0)){     //우상향 경사, 상승중 / 우하향 경사, 하강중
+                //시작좌표값을 접촉중인 경사면의 각도, 길이는 1만큼, 방향은 진행방향과 동일하게 이동시킨다 
+                start = new Vector2(gameObject.transform.position.x + Mathf.Cos(angle * Mathf.Deg2Rad) * (cliffCheckStartSpot * face),
+            
+                gameObject.transform.position.y + Mathf.Sin(angle * Mathf.Deg2Rad));
+
+            }else if((face > 0 && perp.y > 0) || (face < 0 && perp.y < 0)){   //우하향 경사, 하강중 / 우상향 경사, 하강중
+                start = new Vector2(gameObject.transform.position.x + Mathf.Cos(angle * Mathf.Deg2Rad) * (cliffCheckStartSpot * face),
+            
+                gameObject.transform.position.y - Mathf.Sin(angle * Mathf.Deg2Rad));
+            }
+        }
+        cliffCheck = Physics2D.Raycast(start, Vector2.down, cliffCheckDistance, LayerMask.GetMask("groundMask"));
+        Debug.DrawRay(start, Vector2.down * cliffCheckDistance, Color.cyan);//위에서 그려진 ray를 가시화. 색은 Cyan.
+
+        //Debug.Log(cliffCheck.collider.name);
+
+
+        if(!cliffCheck){
+            Debug.Log("Not detected land");
+            cliffCheckDistance += 0.1f;
+            if(cliffCheckDistance > 10){
+                moveDir = 0;
+            }
+        }else{
+            Debug.Log("Detected land");
+            cliffCheckDistance = 1f;
         }
     }
 
@@ -200,9 +235,5 @@ public class Enemy : MonoBehaviour
         //지면 감지 오브젝트 경계선(groundCheckBox)
         Gizmos.color = Color.blue;                               
         Gizmos.DrawWireCube(groundCheckBox.transform.position, groundCheckBox.transform.localScale);
-
-        //절벽 감지 오브젝트 경계선(cliffCheckBox)
-        Gizmos.color = Color.green;                               
-        Gizmos.DrawWireCube(cliffCheckBox.transform.position, cliffCheckBox.transform.localScale);
     }
 }
