@@ -26,7 +26,8 @@ public class Player : MonoBehaviour
     public float jumpPower;     //점프 파워
     public float HP;            //체력
     public float def;           //방어력
-    public float weaponDmg;     //무기 공격력
+    public float weaponDmgClose;     //무기 공격력(근접)
+    public float weaponDmgAway;     //무기 공격력(원거리)
 
     public Vector2 perp;
 
@@ -44,7 +45,7 @@ public class Player : MonoBehaviour
     public float atkMaxTime;  //다음 공격까지 공격을 할 수 없는 시간을 저장
     public Transform atkPos;    //공격이 실행될 위치
     public Vector2 atkBoxSize;  //공격이 실행될 크기
-    public float face;    //공격 방향
+    public float face = 1;    //공격 방향
     public float damageShock;   //피격시 튕겨나가는 힘
 
     public RaycastHit2D isGroundBox;
@@ -60,6 +61,7 @@ public class Player : MonoBehaviour
 
     private void Update() {
         Face();
+        AttackRange();
         Attack();
         AttackTime();
         DetectSlope();
@@ -203,18 +205,35 @@ public class Player : MonoBehaviour
 
     }
 
+    void AttackRange(){
+        RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, 2, LayerMask.GetMask("Enemy"));
+        Debug.DrawRay(rigid.position, Vector2.right * face, Color.magenta);
+    }
+
     void Attack(){          //공격
         if(Input.GetKeyDown("z") && atkCurTime > atkMaxTime){
             AttackingAnime();   //공격 애니메이션
             Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(atkPos.position, atkBoxSize, 0); //OverlapBoxAll(position, size, angle) 배열을 생성하고 감지된 오브젝트를 모두 담는다
             foreach(Collider2D collider in collider2Ds){                                        
                 if(collider.tag == "Enemy"){
-                    gameManager.AtkToEnemy(weaponDmg, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
+                    AttackNear(collider);
+                    
+                }else if(collider.tag != "Enemy"){
+                    
                 }
             }
             atkCurTime = 0;
         }
     }
+
+    void AttackNear(Collider2D collider){   //근접 공격
+        gameManager.AtkToEnemy(weaponDmgClose, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
+    }
+
+    void AttackShoot(){         //원거리 공격
+
+    }
+
     void AttackTime(){      //공격시간 연산
         atkCurTime += Time.deltaTime;
     }
@@ -257,6 +276,10 @@ public class Player : MonoBehaviour
         }
         else{
             return;
+        }
+
+        if((face < 0 & inputX > 0) || (face > 0 && inputX < 0)){
+            face = -face;
         }
     }
 
