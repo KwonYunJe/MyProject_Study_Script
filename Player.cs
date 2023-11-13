@@ -11,12 +11,16 @@ public class Player : MonoBehaviour
     SpriteRenderer sprender;
     public Transform checkPos;
     public GameManager gameManager;
+    public GameObject bullet;
     public GameObject ATKAreaView;
     public GameObject groundCheckBox1;
     //public GameObject groundCheckBox2;
     public GameObject Head;
     public GameObject Body;
     public GameObject Leg;
+    public GameObject Face;
+    public GameObject Psprite;
+    SpriteRenderer pSprender;
 
     Collider2D thisCol;
 
@@ -24,10 +28,12 @@ public class Player : MonoBehaviour
     public float checkRadius;   //감지 반경
     public float distance;      //감지거리
     public float jumpPower;     //점프 파워
+    public float dashPower;     //대쉬 파워
     public float HP;            //체력
     public float def;           //방어력
     public float weaponDmgClose;     //무기 공격력(근접)
     public float weaponDmgAway;     //무기 공격력(원거리)
+    public float attackRange;       //근접, 원거리 공격 여부를 결정하는 거리
 
     public Vector2 perp;
 
@@ -45,7 +51,7 @@ public class Player : MonoBehaviour
     public float atkMaxTime;  //다음 공격까지 공격을 할 수 없는 시간을 저장
     public Transform atkPos;    //공격이 실행될 위치
     public Vector2 atkBoxSize;  //공격이 실행될 크기
-    public float face = 1;    //공격 방향
+    public float face;    //공격 방향
     public float damageShock;   //피격시 튕겨나가는 힘
 
     public RaycastHit2D isGroundBox;
@@ -57,39 +63,46 @@ public class Player : MonoBehaviour
         rigid = GetComponent<Rigidbody2D>();
         thisCol = GetComponent<Collider2D>();
         sprender = GetComponent<SpriteRenderer>();
+        pSprender = Psprite.GetComponent<SpriteRenderer>();
+        face = 1;
     }
 
     private void Update() {
-        Face();
-        AttackRange();
+        FaceDir();
         Attack();
         AttackTime();
         DetectSlope();
         GroundCheck1();
         OnOffDetectGround();
+        FlipSP();
+        Dash();
         //BodySense();
     }
 
     private void FixedUpdate() {
         Move();
         Jump();
+        
     }
+
+    //rigidbody -> translate로 전환 필요
     void Move(){
         inputX = Input.GetAxisRaw("Horizontal");
-        if(isSlope && isGround1 && !isJump){       //isGround는 합쳐서 isLanding으로 묶을 것 
-            rigid.velocity = perp * moveSpeed * inputX * -1;
-        }else if(!isSlope && isGround1){
-            rigid.velocity = new Vector2(inputX * moveSpeed, 0);
-        }else if(!isGround1){
-            rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
+        if(isSlope && isGround1 && !isJump){       
+            //rigid.velocity = perp * moveSpeed * inputX * -1;
+            transform.Translate(perp * moveSpeed * inputX);
+        // }else if(!isSlope && isGround1){
+        //     //rigid.velocity = new Vector2(inputX * moveSpeed, 0);
+        //     transform.Translate(new Vector2(inputX * moveSpeed,0));
+        // }else if(!isGround1){
+        //     rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
         }
         if(isJump){
-            rigid.velocity = new Vector2(inputX * moveSpeed / 1.5f, rigid.velocity.y);
-        }else{
-            rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
+            //rigid.velocity = new Vector2(inputX * moveSpeed / 1.5f, rigid.velocity.y);
+            //transform.Translate(Vector2.right * inputX * moveSpeed * 0.5f);
         }
-        
-        rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
+        //rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
+        transform.Translate(Vector2.right * inputX * moveSpeed * Time.deltaTime);
     }
 
     void DetectSlope(){     //경사로 감지 및 경사로상의 움직임
@@ -110,6 +123,8 @@ public class Player : MonoBehaviour
 
             perp = Vector2.Perpendicular(rayHit.normal).normalized;        //위에서 그려진 법선을 90도 회전한 각도를 저장한다.
             Debug.DrawLine(rayHit.point, rayHit.point + perp, Color.blue);  //Ray가 닿은 부분부터 닿은부분의 수직 법선을 90도 회전한 값으로 그린다. 색은 blue.
+
+            Debug.Log(perp);
 
             if(angle != 0){
                 isSlope = true;
@@ -179,7 +194,7 @@ public class Player : MonoBehaviour
             if (Input.GetAxis("Jump") != 0)
             {
                 isJump = true;
-                rigid.velocity = new Vector2(rigid.velocity.x, 0);
+                //rigid.velocity = new Vector2(rigid.velocity.x, 0);
                 rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
             }
         }
@@ -187,6 +202,20 @@ public class Player : MonoBehaviour
             isJump = false;
         }
     }
+
+    private void Dash(){
+        if((inputX != 0)&&(Input.GetKeyDown(KeyCode.LeftShift))){
+            Debug.Log("DashKey Down");
+            Vector2 lastSpeed = rigid.velocity;
+            moveSpeed = moveSpeed * dashPower;
+            Invoke("EndDash", 0.1f);
+        }
+    }
+
+    private void EndDash(){
+        moveSpeed = moveSpeed / dashPower;
+    }
+
     void OnOffDetectGround(){
         if(rigid.velocity.y > 0){
             groundCheckBox1.SetActive(false);
@@ -205,33 +234,39 @@ public class Player : MonoBehaviour
 
     }
 
-    void AttackRange(){
-        RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, 2, LayerMask.GetMask("Enemy"));
-        Debug.DrawRay(rigid.position, Vector2.right * face, Color.magenta);
-    }
+    void Attack(){
+        //Range
+        RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, attackRange, LayerMask.GetMask("Enemy"));
+        Debug.DrawRay(rigid.position, Vector2.right * face * attackRange, Color.magenta);
 
-    void Attack(){          //공격
         if(Input.GetKeyDown("z") && atkCurTime > atkMaxTime){
-            AttackingAnime();   //공격 애니메이션
-            Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(atkPos.position, atkBoxSize, 0); //OverlapBoxAll(position, size, angle) 배열을 생성하고 감지된 오브젝트를 모두 담는다
-            foreach(Collider2D collider in collider2Ds){                                        
-                if(collider.tag == "Enemy"){
-                    AttackNear(collider);
-                    
-                }else if(collider.tag != "Enemy"){
-                    
-                }
+            if(closeEnemy){
+                AttackNear();
+            }else{
+                AttackShoot();
             }
+
             atkCurTime = 0;
         }
     }
 
-    void AttackNear(Collider2D collider){   //근접 공격
-        gameManager.AtkToEnemy(weaponDmgClose, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
+    void AttackNear(){          //공격
+        AttackingAnime();   //공격 애니메이션
+        Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(atkPos.position, atkBoxSize, 0); //OverlapBoxAll(position, size, angle) 배열을 생성하고 감지된 오브젝트를 모두 담는다
+        foreach(Collider2D collider in collider2Ds){                                        
+            if(collider.tag == "Enemy"){
+                gameManager.AtkToEnemy(weaponDmgClose, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
+                
+            }else if(collider.tag != "Enemy"){
+                
+            }
+        }
     }
 
     void AttackShoot(){         //원거리 공격
-
+        GameObject shootBullet = Instantiate(bullet, transform.position, transform.rotation);   //탄막 생성
+        shootBullet.GetComponent<Bullet>().dir = face;      //탄막 방향
+        shootBullet.GetComponent<Bullet>().bulletDamage = weaponDmgAway;    //탄막 데미지
     }
 
     void AttackTime(){      //공격시간 연산
@@ -251,11 +286,12 @@ public class Player : MonoBehaviour
         // Gizmos.color = Color.green;
         // Gizmos.DrawWireCube(groundCheckBox2.transform.position, groundCheckBox2.transform.localScale);
 
-        //플레이어 바디 범위
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(Head.transform.position, Head.transform.localScale.x);//머리
-        Gizmos.DrawWireCube(Body.transform.position, Body.transform.localScale);//몸통
-        Gizmos.DrawWireSphere(Leg.transform.position, Leg.transform.localScale.x);//다리
+        // //플레이어 바디 범위
+        // Gizmos.color = Color.cyan;
+        // Gizmos.DrawWireSphere(Head.transform.position, Head.transform.localScale.x);//머리
+        // Gizmos.DrawWireCube(Body.transform.position, Body.transform.localScale);//몸통
+        // Gizmos.DrawWireSphere(Leg.transform.position, Leg.transform.localScale.x);//다리
+        // Gizmos.DrawWireCube(Face.transform.position, Face.transform.localScale);//얼굴
     }
 
     void AttackingAnime(){          //공격 애니메이션
@@ -268,19 +304,33 @@ public class Player : MonoBehaviour
 
 
 
-    void Face(){
+    void FaceDir(){
+        //캐릭터 x좌표 - 공격박스 x좌표 
+        float dir = gameObject.transform.position.x - atkPos.transform.position.x;
         if((atkPos.localPosition.x < 0 && inputX ==1) || (atkPos.localPosition.x > 0 && inputX == -1)){
             //Debug.Log(atkPos.localPosition.x + " <<기존|새로>> " + new Vector3(-atkPos.position.x, atkPos.position.y, atkPos.position.z));
             atkPos.localPosition = new Vector3(-atkPos.localPosition.x, atkPos.localPosition.y, atkPos.localPosition.z);
             //Debug.Log(atkPos.position.x);
+            if(dir < 0){
+                face = -1;
+            }else if(dir > 0){
+                face = 1;
+            }
         }
         else{
             return;
         }
+    }
 
-        if((face < 0 & inputX > 0) || (face > 0 && inputX < 0)){
-            face = -face;
+    void FlipSP(){
+        if(face == -1){
+            pSprender.flipX = true;
+            pSprender.transform.localPosition = new Vector2(0.06f,pSprender.transform.localPosition.y);
+        }else{
+            pSprender.flipX = false;
+            pSprender.transform.localPosition = new Vector2(-0.06f,pSprender.transform.localPosition.y);
         }
+        
     }
 
     void Damaged(Collision2D other){     //적에게 맞았을 때
