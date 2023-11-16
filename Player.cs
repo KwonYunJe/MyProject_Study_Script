@@ -12,6 +12,7 @@ public class Player : MonoBehaviour
     public Transform checkPos;
     public GameManager gameManager;
     public GameObject bullet;
+    public GameObject chargingBullet;
     public GameObject ATKAreaView;
     public GameObject groundCheckBox1;
     //public GameObject groundCheckBox2;
@@ -34,6 +35,7 @@ public class Player : MonoBehaviour
     public float weaponDmgClose;     //무기 공격력(근접)
     public float weaponDmgAway;     //무기 공격력(원거리)
     public float attackRange;       //근접, 원거리 공격 여부를 결정하는 거리
+    public float charging;          //차징 공격
 
     public Vector2 perp;
 
@@ -71,11 +73,13 @@ public class Player : MonoBehaviour
         FaceDir();
         Attack();
         AttackTime();
+        Dash();
         DetectSlope();
+        DetectCharging();
         GroundCheck1();
         OnOffDetectGround();
         FlipSP();
-        Dash();
+   
         //BodySense();
     }
 
@@ -124,7 +128,7 @@ public class Player : MonoBehaviour
             perp = Vector2.Perpendicular(rayHit.normal).normalized;        //위에서 그려진 법선을 90도 회전한 각도를 저장한다.
             Debug.DrawLine(rayHit.point, rayHit.point + perp, Color.blue);  //Ray가 닿은 부분부터 닿은부분의 수직 법선을 90도 회전한 값으로 그린다. 색은 blue.
 
-            Debug.Log(perp);
+            //Debug.Log(perp);
 
             if(angle != 0){
                 isSlope = true;
@@ -239,14 +243,54 @@ public class Player : MonoBehaviour
         RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, attackRange, LayerMask.GetMask("Enemy"));
         Debug.DrawRay(rigid.position, Vector2.right * face * attackRange, Color.magenta);
 
-        if(Input.GetKeyDown("z") && atkCurTime > atkMaxTime){
-            if(closeEnemy){
-                AttackNear();
+        if(Input.GetKeyUp("z") && atkCurTime > atkMaxTime){
+            if(charging < 3){
+                Debug.Log("일반공격 감지 : " + charging);
+                if(closeEnemy){
+                    AttackNear();
+                }else{
+                    AttackShoot();
+                }
+                atkCurTime = 0;
+                charging = 0;
             }else{
-                AttackShoot();
+                Debug.Log("차징샷 감지 : " + charging);
+                AttackChargingShoot();
+                atkCurTime = 0;
+                charging = 0;
             }
+        }
 
-            atkCurTime = 0;
+        // if(Input.GetKey("z") && atkCurTime > atkMaxTime){
+        //     DetectCharging();
+        //     Debug.Log("key입력중 감지");
+        //     if(Input.GetKeyUp("z") && charging < 10){
+        //         Debug.Log("일반공격 감지 : " + charging);
+        //         if(closeEnemy){
+        //             AttackNear();
+        //         }else{
+        //             AttackShoot();
+        //         }
+        //         atkCurTime = 0;
+        //         charging = 0;
+        //     }else if(charging >= 10 && Input.GetKeyUp("z")){
+        //         Debug.Log("차징샷 감지 : " + charging);
+        //         AttackChargingShoot();
+        //         atkCurTime = 0;
+        //         charging = 0;
+        //     }
+        //     // atkCurTime = 0;
+        //     // charging = 0;
+        // }
+    }
+
+    void DetectCharging(){
+        if(Input.GetKey("z")){
+           charging = charging + 0.05f;
+           if(charging > 30){
+                charging = 30;
+           }
+           //Debug.Log(charging);
         }
     }
 
@@ -267,6 +311,22 @@ public class Player : MonoBehaviour
         GameObject shootBullet = Instantiate(bullet, transform.position, transform.rotation);   //탄막 생성
         shootBullet.GetComponent<Bullet>().dir = face;      //탄막 방향
         shootBullet.GetComponent<Bullet>().bulletDamage = weaponDmgAway;    //탄막 데미지
+        // if(Input.GetKey("z")){
+        //     Debug.Log("Charging Start ");
+        //     charging++;
+        //     Debug.Log("Charging " + charging);
+        //     if(Input.GetKeyUp("z")){
+        //         AttackChargingShoot();
+        //     }
+        // }
+    }
+
+    void AttackChargingShoot(){
+        Debug.Log("ChargShoot!");
+        float bulletPositionX = transform.position.x + face * chargingBullet.transform.localScale.x/2 ; //샷 생성 위치 조정
+        GameObject chargingShootBullet = Instantiate(chargingBullet, new Vector2(bulletPositionX, transform.position.y), transform.rotation);   //탄막 생성
+        chargingShootBullet.GetComponent<Bullet_Charging>().charging = charging * 0.05f;      //차징샷 크기 
+        chargingShootBullet.GetComponent<Bullet_Charging>().bulletDamage = weaponDmgAway;    //탄막 데미지
     }
 
     void AttackTime(){      //공격시간 연산

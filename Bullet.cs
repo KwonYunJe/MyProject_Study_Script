@@ -32,7 +32,7 @@ public class Bullet : MonoBehaviour
     }
     
     private void OnTriggerEnter2D(Collider2D other) {
-        if(other.gameObject.tag == "BulletBorder"){         //탄막 제거
+        if(other.gameObject.tag == "groundMask"){         //탄막 제거
             Destroy(gameObject);       //게임 오브젝트 삭제
         }
 
