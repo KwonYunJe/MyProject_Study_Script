@@ -89,20 +89,20 @@ public class Player : MonoBehaviour
     void Move(){
         inputX = Input.GetAxisRaw("Horizontal");
         if(isSlope && isGround1 && !isJump){       
-            //rigid.velocity = perp * moveSpeed * inputX * -1;
-            transform.Translate(perp * moveSpeed * inputX);
-        // }else if(!isSlope && isGround1){
-        //     //rigid.velocity = new Vector2(inputX * moveSpeed, 0);
-        //     transform.Translate(new Vector2(inputX * moveSpeed,0));
-        // }else if(!isGround1){
-        //     rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
+            rigid.velocity = perp * moveSpeed * inputX * -1;
+            //transform.Translate(perp * moveSpeed * inputX);
+        }else if(!isSlope && isGround1){
+            //rigid.velocity = new Vector2(inputX * moveSpeed, 0);
+            //transform.Translate(new Vector2(inputX * moveSpeed,0));
+        }else if(!isGround1){
+            rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
         }
         if(isJump){
-            //rigid.velocity = new Vector2(inputX * moveSpeed / 1.5f, rigid.velocity.y);
+            rigid.velocity = new Vector2(inputX * moveSpeed / 1.5f, rigid.velocity.y);
             //transform.Translate(Vector2.right * inputX * moveSpeed * 0.5f);
         }
-        //rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
-        transform.Translate(Vector2.right * inputX * moveSpeed * Time.deltaTime);
+        rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
+        //transform.Translate(Vector2.right * inputX * moveSpeed * Time.deltaTime);
     }
 
     void DetectSlope(){     //경사로 감지 및 경사로상의 움직임
