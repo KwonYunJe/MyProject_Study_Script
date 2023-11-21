@@ -253,4 +253,8 @@ public class Enemy : MonoBehaviour
         Gizmos.color = Color.blue;                               
         Gizmos.DrawWireCube(groundCheckBox.transform.position, groundCheckBox.transform.localScale);
     }
+
+    void Test(){
+        Debug.Log("This is Git test");
+    }
 }
