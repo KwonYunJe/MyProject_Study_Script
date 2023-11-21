@@ -222,7 +222,7 @@ public class Enemy : MonoBehaviour
 
     private void DamagedAnime(){
         sprender.color = new Color(1, 1, 1, 1);
-        Invoke("DamagedAnimeEnd",0.2f);
+        Invoke("DamagedAnimeEnd",0.1f);
     }
 
     private void DamagedAnimeEnd(){
@@ -253,4 +253,6 @@ public class Enemy : MonoBehaviour
         Gizmos.color = Color.blue;                               
         Gizmos.DrawWireCube(groundCheckBox.transform.position, groundCheckBox.transform.localScale);
     }
+
+
 }

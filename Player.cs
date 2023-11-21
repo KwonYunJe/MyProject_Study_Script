@@ -30,12 +30,17 @@ public class Player : MonoBehaviour
     public float distance;      //감지거리
     public float jumpPower;     //점프 파워
     public float dashPower;     //대쉬 파워
+    public bool isDash;         //대쉬 중 방향 조작 불가
+    public float dashDir;       //대쉬 방향
     public float HP;            //체력
     public float def;           //방어력
     public float weaponDmgClose;     //무기 공격력(근접)
     public float weaponDmgAway;     //무기 공격력(원거리)
     public float attackRange;       //근접, 원거리 공격 여부를 결정하는 거리
-    public float charging;          //차징 공격
+    public float charging;          //차징 공격(게이지)
+    public bool isCharging;         //차징 중
+    public bool isCharginAtk;       //차징 공격 중
+    public float chargingAtkTime;   //차징공격 지속 시간
 
     public Vector2 perp;
 
@@ -91,7 +96,20 @@ public class Player : MonoBehaviour
 
     //rigidbody -> translate로 전환 필요
     void Move(){
-        inputX = Input.GetAxisRaw("Horizontal");
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////움직임 제어 조건
+        if(isDash == true){     // 대쉬상태일 경우
+            inputX = dashDir;   // 대쉬를 할 방향으로 고정
+        }
+        
+        else if(isCharginAtk || isCharging){   //차징샷을 충전중이거나 공격을 실행중일 시
+            inputX = 0;                         //좌우 입력을 무시한다.
+        }
+        
+        else{                  // 대쉬상태가 아닐 경우
+            inputX = Input.GetAxisRaw("Horizontal");    //수평계 입력을 방향으로 설정
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////슬로프 조건 
         if(isSlope && isGround1 && !isJump){       
             rigid.velocity = perp * moveSpeed * inputX * -1;
             //transform.Translate(perp * moveSpeed * inputX);
@@ -105,6 +123,9 @@ public class Player : MonoBehaviour
             rigid.velocity = new Vector2(inputX * moveSpeed / 1.5f, rigid.velocity.y);
             //transform.Translate(Vector2.right * inputX * moveSpeed * 0.5f);
         }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////움직임 연산
+
         rigid.velocity = new Vector2(inputX * moveSpeed, rigid.velocity.y);
         //transform.Translate(Vector2.right * inputX * moveSpeed * Time.deltaTime);
     }
@@ -195,7 +216,7 @@ public class Player : MonoBehaviour
     private void Jump()
     {
         if (isGround1 == true){
-            if (Input.GetAxis("Jump") != 0)
+            if (Input.GetAxis("Jump") != 0 && !(isCharginAtk || isCharging))    //공격을 차징중이거나 차징공격을 실행중일 때는 점프를 할 수 없다.
             {
                 isJump = true;
                 //rigid.velocity = new Vector2(rigid.velocity.x, 0);
@@ -210,14 +231,16 @@ public class Player : MonoBehaviour
     private void Dash(){
         if((inputX != 0)&&(Input.GetKeyDown(KeyCode.LeftShift))){
             Debug.Log("DashKey Down");
-            Vector2 lastSpeed = rigid.velocity;
-            moveSpeed = moveSpeed * dashPower;
-            Invoke("EndDash", 0.1f);
+            dashDir = Input.GetAxisRaw("Horizontal");       //누르고 있는 방향을 대쉬 방향으로 고정
+            isDash = true;                                  //대쉬 상태 on
+            moveSpeed = moveSpeed * dashPower;              //이동속도를 증가
+            Invoke("EndDash", 0.1f);                        //0.1초 후 감속 함수를 실행
         }
     }
 
     private void EndDash(){
-        moveSpeed = moveSpeed / dashPower;
+        moveSpeed = moveSpeed / dashPower;                  //증가했던 속도만큼 다시 감소
+        isDash = false;                                     //대쉬 상태 off
     }
 
     void OnOffDetectGround(){
@@ -255,6 +278,8 @@ public class Player : MonoBehaviour
                 charging = 0;
             }else{
                 Debug.Log("차징샷 감지 : " + charging);
+                isCharging = false;     //충전 상태 off
+                isCharginAtk = true;    //공격 상태 on
                 AttackChargingShoot();
                 atkCurTime = 0;
                 charging = 0;
@@ -287,6 +312,9 @@ public class Player : MonoBehaviour
     void DetectCharging(){
         if(Input.GetKey("z")){
            charging = charging + 0.05f;
+           if(charging >= 3){
+            isCharging = true;  //충전 상태 on
+           }
            if(charging > 30){
                 charging = 30;
            }
@@ -311,22 +339,20 @@ public class Player : MonoBehaviour
         GameObject shootBullet = Instantiate(bullet, transform.position, transform.rotation);   //탄막 생성
         shootBullet.GetComponent<Bullet>().dir = face;      //탄막 방향
         shootBullet.GetComponent<Bullet>().bulletDamage = weaponDmgAway;    //탄막 데미지
-        // if(Input.GetKey("z")){
-        //     Debug.Log("Charging Start ");
-        //     charging++;
-        //     Debug.Log("Charging " + charging);
-        //     if(Input.GetKeyUp("z")){
-        //         AttackChargingShoot();
-        //     }
-        // }
     }
 
     void AttackChargingShoot(){
         Debug.Log("ChargShoot!");
         float bulletPositionX = transform.position.x + face * chargingBullet.transform.localScale.x/2 ; //샷 생성 위치 조정
         GameObject chargingShootBullet = Instantiate(chargingBullet, new Vector2(bulletPositionX, transform.position.y), transform.rotation);   //탄막 생성
-        chargingShootBullet.GetComponent<Bullet_Charging>().charging = charging * 0.05f;      //차징샷 크기 
-        chargingShootBullet.GetComponent<Bullet_Charging>().bulletDamage = weaponDmgAway;    //탄막 데미지
+        chargingShootBullet.GetComponent<Bullet_Charging>().charging = charging * 0.05f;            //차징샷 크기 
+        chargingShootBullet.GetComponent<Bullet_Charging>().bulletDamage = weaponDmgAway;           //탄막 데미지
+        chargingShootBullet.GetComponent<Bullet_Charging>().chargingAtkTime = chargingAtkTime;      //탄막 유지시간
+        Invoke("EndAttackChargingShoot", chargingAtkTime);                                          //탄막 유지시간이 다 되면 공격상태 off
+    }
+
+    void EndAttackChargingShoot(){
+        isCharginAtk = false;
     }
 
     void AttackTime(){      //공격시간 연산
