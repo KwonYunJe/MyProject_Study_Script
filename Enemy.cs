@@ -13,19 +13,22 @@ public class Enemy : MonoBehaviour
     public RaycastHit2D cliffCheck;
 
     public Rigidbody2D rigid;
+    CircleCollider2D circleCol;
     SpriteRenderer sprender;
 
 
     public float hp;
     public float atkPower;
 
+    public bool move;
     public int moveDir;
     public float moveTime ;
     public int moveSpeed;
     public int face;
     public float jumpPower;
     public bool jumping;
-
+    public bool startDestroy;
+    public float alpha; //파괴 애니메이션을 위한 투명도 값
     
     public bool isSlope;
     public bool isGround;
@@ -41,9 +44,12 @@ public class Enemy : MonoBehaviour
     private void Start() {
         rigid = GetComponent<Rigidbody2D>();
         sprender = GetComponent<SpriteRenderer>();
+        circleCol = GetComponent<CircleCollider2D>();
+        move = true;
         Invoke("MonsterMoveStatus", 1f);
         MonsterJumpPer();
         face = 1;
+        alpha = 1;
     }
     private void Awake() {
         
@@ -51,30 +57,38 @@ public class Enemy : MonoBehaviour
     }
 
     private void Update() {
-        MosterMove();
-        DetectSlope();
-        GroundCheck();
-        Face();
-        DetectCliff();
+        if(startDestroy == false){
+            MosterMove();
+            DetectSlope();
+            GroundCheck();
+            Face();
+            DetectCliff();
+        }
+        Destory2nd();
     }
 
 
 ///이동관련//////////////////////////////////////////////////////////////////////////////////////////
 
     void MosterMove(){
-        if(isSlope && isGround && !isJump){       //isGround는 합쳐서 isLanding으로 묶을 것 
-            rigid.velocity = perp * moveSpeed * moveDir * -1;
-        }else if(!isSlope && isGround){
-            //rigid.velocity = new Vector2(moveDir * moveSpeed, 0);
-        }else if(!isGround){
-            rigid.velocity = new Vector2(moveDir * moveSpeed, rigid.velocity.y);
-        }
+        if(move == true){
 
-        rigid.velocity = new Vector2(moveDir  * moveSpeed, rigid.velocity.y);
+            if(isSlope && isGround && !isJump){       //isGround는 합쳐서 isLanding으로 묶을 것 
+                rigid.velocity = perp * moveSpeed * moveDir * -1;
+            }else if(!isSlope && isGround){
+                //rigid.velocity = new Vector2(moveDir * moveSpeed, 0);
+            }else if(!isGround){
+                rigid.velocity = new Vector2(moveDir * moveSpeed, rigid.velocity.y);
+            }
 
-        if(isGround && rigid.velocity.y <= 0){
-            isJump = false;
+            rigid.velocity = new Vector2(moveDir  * moveSpeed, rigid.velocity.y);
+
+            if(isGround && rigid.velocity.y <= 0){
+                isJump = false;
+            }
+
         }
+        
     }
 
     void MonsterMoveStatus(){
@@ -201,26 +215,36 @@ public class Enemy : MonoBehaviour
         if(hp > weaponDmg){
             hp = hp-weaponDmg;
         }else{
-            DestoryAnime();
+            Destroy1st();
+            startDestroy = true;
         }
     }
 
     private void DamagedAnime(){
         sprender.color = new Color(1, 1, 1, 1);
-        Invoke("DamagedAnimeEnd",0.5f);
+        Invoke("DamagedAnimeEnd",0.2f);
     }
 
     private void DamagedAnimeEnd(){
-        sprender.color = new Color(78f / 255f, 174f / 255f ,255f / 255f,1);
+        sprender.color = new Color(78f / 255f, 174f / 255f ,255f / 255f, 1);
     }
 
-    private void DestoryAnime(){
-        sprender.color = Color.red;
-        Destroy();
+    public void Destroy1st(){
+        move = false;
+        circleCol.enabled = false;
+        Destroy(rigid);
+        transform.position = new Vector2(transform.position.x, transform.position.y);
     }
 
-    public void Destroy(){
-        gameObject.SetActive(false);
+     private void Destory2nd(){
+        if(startDestroy == true){
+            alpha = alpha - 0.01f;
+            if(alpha <= 0){
+                Destroy(gameObject);
+            }else{
+                sprender.color = new Color(78f / 255f, 174f / 255f ,255f / 255f, alpha);
+            }
+        }
     }
 
 
