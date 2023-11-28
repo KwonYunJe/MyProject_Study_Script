@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
     public float playerCurCharging;
     public float playerMaxMP;
     public float playerCurMP;
+    public float playerMaxExp;
+    public float playerCurExp;
     public float expByEnemy;
 
 
@@ -49,6 +51,7 @@ public class GameManager : MonoBehaviour
         SetUICont_HP();
         SetUICont_MP();
         SetUICont_Charging();
+        SetUICont_Exp();
     }
     public void SetUICont_HP(){
         uiController.GetComponent<UIController>().playerMaxHP = playerMaxHP;
@@ -61,6 +64,10 @@ public class GameManager : MonoBehaviour
     public void SetUICont_Charging(){
         uiController.GetComponent<UIController>().playerMaxCharging = playerMaxCharging;
         uiController.GetComponent<UIController>().playerCurCharging = playerCurCharging;
+    }
+    public void SetUICont_Exp(){
+        uiController.GetComponent<UIController>().playerMaxExp = playerMaxExp;
+        uiController.GetComponent<UIController>().playerCurExp = playerCurExp;
     }
     public void NotEnoughMP(){
         uiController.GetComponent<UIController>().NotEnoughMPAni();

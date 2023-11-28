@@ -10,6 +10,11 @@ public class UIController : MonoBehaviour
     public Image chargingBar;
     public Image mpBar;
     public Image mpBarBack;
+    public Image expBar;
+    public Text hpText;
+    public Text mpText;
+    public Text chargingText;
+    public Text expText;
     public float playerMaxHP;
     public float playerCurHP;
     public bool playerIsDamaged;
@@ -17,6 +22,8 @@ public class UIController : MonoBehaviour
     public float playerCurCharging;
     public float playerMaxMP;
     public float playerCurMP;
+    public float playerMaxExp;
+    public float playerCurExp;
     public int mpAniCycle;
     public int mpAniCycleMax;
 
@@ -28,6 +35,7 @@ public class UIController : MonoBehaviour
     {
         setHP();
         SetMP();
+        SetExp();
         setCharging();
     }
 
@@ -35,6 +43,7 @@ public class UIController : MonoBehaviour
         if(playerMaxHP != 0){
             float amount = playerCurHP / playerMaxHP;
             HpBarCircle.fillAmount = amount;
+            hpText.text = amount * 100 + "%";
             //Debug.Log(amount);
         }
     }
@@ -43,6 +52,7 @@ public class UIController : MonoBehaviour
         if(playerMaxCharging != 0){
             float amount = playerCurCharging / playerMaxCharging;
             chargingBar.fillAmount = amount;
+            chargingText.text = amount * 100 + "%";
             //Debug.Log(amount);
         }
     }
@@ -51,6 +61,16 @@ public class UIController : MonoBehaviour
         if(playerMaxMP != 0){
             float amount = playerCurMP / playerMaxMP;
             mpBar.fillAmount = amount;
+            mpText.text = amount * 100 + "%";
+            //Debug.Log(amount);
+        }
+    }
+
+    public void SetExp(){
+        if(playerMaxExp != 0){
+            float amount = playerCurExp / playerMaxExp;
+            expBar.fillAmount = amount;
+            expText.text = amount * 100 + "%";
             //Debug.Log(amount);
         }
     }

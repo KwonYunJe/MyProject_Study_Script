@@ -95,7 +95,7 @@ public class Player : MonoBehaviour
         GroundCheck1();
         OnOffDetectGround();
         FlipSP();
-        SendHP();
+        SendGM();
         //BodySense();
     }
 
@@ -451,10 +451,12 @@ public class Player : MonoBehaviour
         gameManager.playerMaxHP = maxHP;
         gameManager.playerMaxCharging = chargingMax;
         gameManager.playerMaxMP = maxMP;
+        gameManager.playerMaxExp = maxExp;
     }
-    void SendHP(){
+    void SendGM(){
         gameManager.playerCurHP = curHP;
         gameManager.playerCurMP = curMP;
+        gameManager.playerCurExp = curExp;
         if(isCharging){
             gameManager.playerCurCharging = charging;
         }
@@ -471,6 +473,9 @@ public class Player : MonoBehaviour
     public void GetExp(float exp){
         curExp = curExp + exp;
         if(curExp >= maxExp){
+            curExp = curExp - maxExp;                                           //경험치 초과분
+            maxExp = maxExp + maxExp * 0.3f;                                    //최대 경험치 갱신
+            gameManager.playerMaxExp = maxExp;                                  //gm의 최대 경험치 갱신
             playerLevel++;
         }
     }
