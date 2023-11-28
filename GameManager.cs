@@ -8,10 +8,21 @@ public class GameManager : MonoBehaviour
     public GameObject player;
     public GameObject coinBox;
     public GameObject Enemy;
+    public GameObject uiController;
     public int score;
+    public float playerMaxHP;
+    public float playerCurHP;
+    public float playerDamagedHP;
+    public float playerMaxCharging;
+    public float playerCurCharging;
+    public float playerMaxMP;
+    public float playerCurMP;
+    public float expByEnemy;
+
+
 
     private void Update() {
-        
+        SetUICont();
     }
 
     public void GetSilverCoin(){
@@ -30,5 +41,37 @@ public class GameManager : MonoBehaviour
 
     public float DamagedFromEnemy(Collision2D enemy){
         return enemy.collider.GetComponent<Enemy>().atkPower;
+    }
+
+
+    //UI 컨트롤//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public void SetUICont(){
+        SetUICont_HP();
+        SetUICont_MP();
+        SetUICont_Charging();
+    }
+    public void SetUICont_HP(){
+        uiController.GetComponent<UIController>().playerMaxHP = playerMaxHP;
+        uiController.GetComponent<UIController>().playerCurHP = playerCurHP;
+    }
+    public void SetUICont_MP(){
+        uiController.GetComponent<UIController>().playerMaxMP = playerMaxMP;
+        uiController.GetComponent<UIController>().playerCurMP = playerCurMP;
+    }
+    public void SetUICont_Charging(){
+        uiController.GetComponent<UIController>().playerMaxCharging = playerMaxCharging;
+        uiController.GetComponent<UIController>().playerCurCharging = playerCurCharging;
+    }
+    public void NotEnoughMP(){
+        uiController.GetComponent<UIController>().NotEnoughMPAni();
+    }
+
+
+    //적 사망시 이벤트////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public void EnemyDeadEvent(GameObject enemy){
+        ExpToPlayer(enemy.GetComponent<Enemy>().enemyLevel);
+    }
+        public void ExpToPlayer(float exp){
+        player.GetComponent<Player>().GetExp(exp);
     }
 }

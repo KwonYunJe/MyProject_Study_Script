@@ -19,6 +19,7 @@ public class Enemy : MonoBehaviour
 
     public float hp;
     public float atkPower;
+    public float enemyLevel;
 
     public bool move;
     public int moveDir;
@@ -215,6 +216,7 @@ public class Enemy : MonoBehaviour
         if(hp > weaponDmg){
             hp = hp-weaponDmg;
         }else{
+            gameManager.EnemyDeadEvent(gameObject);
             Destroy1st();
             startDestroy = true;
         }

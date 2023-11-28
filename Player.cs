@@ -32,15 +32,24 @@ public class Player : MonoBehaviour
     public float dashPower;     //대쉬 파워
     public bool isDash;         //대쉬 중 방향 조작 불가
     public float dashDir;       //대쉬 방향
-    public float HP;            //체력
+    public float maxHP;         //최대체력
+    public float curHP;         //현재체력
+    public float maxMP;         //최대마나
+    public float curMP;         //현재마나
     public float def;           //방어력
+    public float playerLevel;   //레벨
+    public float maxExp;        //최대 경험치
+    public float curExp;        //현재 경험치
     public float weaponDmgClose;     //무기 공격력(근접)
     public float weaponDmgAway;     //무기 공격력(원거리)
     public float attackRange;       //근접, 원거리 공격 여부를 결정하는 거리
+    public float chargingMax;       //차징 최대치
     public float charging;          //차징 공격(게이지)
     public bool isCharging;         //차징 중
+    public bool failCharging;       //차징 실패
     public bool isCharginAtk;       //차징 공격 중
     public float chargingAtkTime;   //차징공격 지속 시간
+    public float chargingCost;      //차징공격 소모 마나
 
     public Vector2 perp;
 
@@ -72,6 +81,8 @@ public class Player : MonoBehaviour
         sprender = GetComponent<SpriteRenderer>();
         pSprender = Psprite.GetComponent<SpriteRenderer>();
         face = 1;
+        FirstSend();
+        curMP = maxMP;
     }
 
     private void Update() {
@@ -84,7 +95,7 @@ public class Player : MonoBehaviour
         GroundCheck1();
         OnOffDetectGround();
         FlipSP();
-   
+        SendHP();
         //BodySense();
     }
 
@@ -95,7 +106,8 @@ public class Player : MonoBehaviour
     }
 
     //rigidbody -> translate로 전환 필요
-    void Move(){
+    //움직임/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       void Move(){
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////움직임 제어 조건
         if(isDash == true){     // 대쉬상태일 경우
             inputX = dashDir;   // 대쉬를 할 방향으로 고정
@@ -261,18 +273,24 @@ public class Player : MonoBehaviour
 
     }
 
+
+    //공격  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void Attack(){
         //Range
         RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, attackRange, LayerMask.GetMask("Enemy"));
         Debug.DrawRay(rigid.position, Vector2.right * face * attackRange, Color.magenta);
 
-        if(Input.GetKeyUp("z") && atkCurTime > atkMaxTime){
-            if(charging < 3){
+        if(Input.GetKeyUp("z") && atkCurTime > atkMaxTime && !isCharginAtk){
+            if(charging < 3 || failCharging){
                 Debug.Log("일반공격 감지 : " + charging);
                 if(closeEnemy){
                     AttackNear();
                 }else{
-                    AttackShoot();
+                    if(failCharging == false){
+                        AttackShoot();
+                    }else{
+                        failCharging = false;
+                    }
                 }
                 atkCurTime = 0;
                 charging = 0;
@@ -310,14 +328,21 @@ public class Player : MonoBehaviour
     }
 
     void DetectCharging(){
-        if(Input.GetKey("z")){
-           charging = charging + 0.05f;
-           if(charging >= 3){
-            isCharging = true;  //충전 상태 on
-           }
-           if(charging > 30){
-                charging = 30;
-           }
+        if(Input.GetKey("z") && !isCharginAtk){
+            charging = charging + 0.05f;
+            if(charging >= 3){
+                if(curMP - chargingCost >= 0){          //마나가 충분할 때
+                    isCharging = true;  //충전 상태 on
+                    if(charging > chargingMax){
+                        charging = chargingMax;
+                    }
+                }else if(failCharging == false && curMP - chargingCost < 0){  //공격에 필요한 마나가 부족할 때 
+                    failCharging = true;
+                    charging = 0;
+                    Debug.Log("Not enough MP!");
+                    gameManager.NotEnoughMP();
+                }
+            }
            //Debug.Log(charging);
         }
     }
@@ -343,6 +368,7 @@ public class Player : MonoBehaviour
 
     void AttackChargingShoot(){
         Debug.Log("ChargShoot!");
+        curMP = curMP - chargingCost;
         float bulletPositionX = transform.position.x + face * chargingBullet.transform.localScale.x/2 ; //샷 생성 위치 조정
         GameObject chargingShootBullet = Instantiate(chargingBullet, new Vector2(bulletPositionX, transform.position.y), transform.rotation);   //탄막 생성
         chargingShootBullet.GetComponent<Bullet_Charging>().charging = charging * 0.05f;            //차징샷 크기 
@@ -353,31 +379,11 @@ public class Player : MonoBehaviour
 
     void EndAttackChargingShoot(){
         isCharginAtk = false;
+        gameManager.playerCurCharging = 0;
     }
 
     void AttackTime(){      //공격시간 연산
         atkCurTime += Time.deltaTime;
-    }
-
-    private void OnDrawGizmos() {   
-        //공격 범위 그리기
-        Gizmos.color = Color.red;                               
-        Gizmos.DrawWireCube(atkPos.position, atkBoxSize);
-
-        //지면 감지 범위1
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireCube(groundCheckBox1.transform.position, groundCheckBox1.transform.localScale);
-        
-        //지면 감지 범위2
-        // Gizmos.color = Color.green;
-        // Gizmos.DrawWireCube(groundCheckBox2.transform.position, groundCheckBox2.transform.localScale);
-
-        // //플레이어 바디 범위
-        // Gizmos.color = Color.cyan;
-        // Gizmos.DrawWireSphere(Head.transform.position, Head.transform.localScale.x);//머리
-        // Gizmos.DrawWireCube(Body.transform.position, Body.transform.localScale);//몸통
-        // Gizmos.DrawWireSphere(Leg.transform.position, Leg.transform.localScale.x);//다리
-        // Gizmos.DrawWireCube(Face.transform.position, Face.transform.localScale);//얼굴
     }
 
     void AttackingAnime(){          //공격 애니메이션
@@ -418,26 +424,21 @@ public class Player : MonoBehaviour
         }
         
     }
-
+    //피격  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void Damaged(Collision2D other){     //적에게 맞았을 때
         float damage = gameManager.DamagedFromEnemy(other);
-        rigid.velocity = Vector2.zero;  //이전 연산되고 있던 속도를 무효
         gameObject.layer = 9;
         sprender.color = new Color( 120/255f , 120/255f, 120/255f);
         if(damage <= def / 15){
-            HP = HP - 0;
+            curHP = curHP - 0;
         }else{
-            if(HP > HP - (damage - def / 15)){
-                HP = HP - (damage - def / 15);//플레이어 체력감소
+            if(curHP > curHP - (damage - def / 15)){
+                curHP = curHP - (damage - def / 15);//플레이어 체력감소
+                gameManager.playerDamagedHP = curHP;//감소된 체력을 gamemanger로 전달
             }else{
                 //Destroy
             }
         }
-        
-        int dirc = transform.position.x - other.gameObject.GetComponent<Enemy>().rigid.position.x > 0 ? 1 : -1;     //(현재 플레이어의 좌표 - 부딪힌 오브젝트의 좌표) 가 양수일때는 1, 음수일때는 -1
-        //Debug.Log(dirc);
-        rigid.AddForce(new Vector2(dirc * 100000, 1) * damageShock ,ForceMode2D.Impulse);      //위의 방향(dirc)대로 힘을 가함 
-        Debug.Log(new Vector2(dirc * 100000, 1));
         Invoke("OffDamaged", 0.5f); 
     }
 
@@ -445,7 +446,19 @@ public class Player : MonoBehaviour
         gameObject.layer = 3;
         sprender.color = new Color(0,0,0);
     }
-
+    // 상호작용///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    void FirstSend(){
+        gameManager.playerMaxHP = maxHP;
+        gameManager.playerMaxCharging = chargingMax;
+        gameManager.playerMaxMP = maxMP;
+    }
+    void SendHP(){
+        gameManager.playerCurHP = curHP;
+        gameManager.playerCurMP = curMP;
+        if(isCharging){
+            gameManager.playerCurCharging = charging;
+        }
+    }
     void GetCoin(Collision2D other){    //코인 획득 시
         if(other.gameObject.name == "GoldCoin(Clone)"){
                 gameManager.GetGoldCoin();
@@ -453,5 +466,34 @@ public class Player : MonoBehaviour
                 gameManager.GetSilverCoin();
             }
             Destroy(other.gameObject);
+    }
+
+    public void GetExp(float exp){
+        curExp = curExp + exp;
+        if(curExp >= maxExp){
+            playerLevel++;
+        }
+    }
+
+
+    private void OnDrawGizmos() {   
+        //공격 범위 그리기
+        Gizmos.color = Color.red;                               
+        Gizmos.DrawWireCube(atkPos.position, atkBoxSize);
+
+        //지면 감지 범위1
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(groundCheckBox1.transform.position, groundCheckBox1.transform.localScale);
+        
+        //지면 감지 범위2
+        // Gizmos.color = Color.green;
+        // Gizmos.DrawWireCube(groundCheckBox2.transform.position, groundCheckBox2.transform.localScale);
+
+        // //플레이어 바디 범위
+        // Gizmos.color = Color.cyan;
+        // Gizmos.DrawWireSphere(Head.transform.position, Head.transform.localScale.x);//머리
+        // Gizmos.DrawWireCube(Body.transform.position, Body.transform.localScale);//몸통
+        // Gizmos.DrawWireSphere(Leg.transform.position, Leg.transform.localScale.x);//다리
+        // Gizmos.DrawWireCube(Face.transform.position, Face.transform.localScale);//얼굴
     }
 }

@@ -56,7 +56,7 @@ public class Bullet_Charging : MonoBehaviour
     void DestroyAnim(){
         if(endAtk == true){
             transform.localScale = new Vector2(transform.localScale.x, transform.localScale.y - 0.05f);
-            if(transform.localScale.y < 0){ 
+            if(transform.localScale.y <= 0){ 
                 Destroy();
             }
         }
