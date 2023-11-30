@@ -7,6 +7,7 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    Weapon_Close weapon_Close;
     Rigidbody2D rigid;
     SpriteRenderer sprender;
     public Transform checkPos;
@@ -284,7 +285,8 @@ public class Player : MonoBehaviour
             if(charging < 3 || failCharging){
                 Debug.Log("일반공격 감지 : " + charging);
                 if(closeEnemy){
-                    AttackNear();
+                    //AttackNear();
+                    weapon_Close.AttackNear();
                 }else{
                     if(failCharging == false){
                         AttackShoot();
@@ -347,18 +349,18 @@ public class Player : MonoBehaviour
         }
     }
 
-    void AttackNear(){          //공격
-        AttackingAnime();   //공격 애니메이션
-        Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(atkPos.position, atkBoxSize, 0); //OverlapBoxAll(position, size, angle) 배열을 생성하고 감지된 오브젝트를 모두 담는다
-        foreach(Collider2D collider in collider2Ds){                                        
-            if(collider.tag == "Enemy"){
-                gameManager.AtkToEnemy(weaponDmgClose, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
+    // void AttackNear(){          //공격
+    //     AttackingAnime();   //공격 애니메이션
+    //     Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(atkPos.position, atkBoxSize, 0); //OverlapBoxAll(position, size, angle) 배열을 생성하고 감지된 오브젝트를 모두 담는다
+    //     foreach(Collider2D collider in collider2Ds){                                        
+    //         if(collider.tag == "Enemy"){
+    //             gameManager.AtkToEnemy(weaponDmgClose, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
                 
-            }else if(collider.tag != "Enemy"){
+    //         }else if(collider.tag != "Enemy"){
                 
-            }
-        }
-    }
+    //         }
+    //     }
+    // }
 
     void AttackShoot(){         //원거리 공격
         GameObject shootBullet = Instantiate(bullet, transform.position, transform.rotation);   //탄막 생성
@@ -386,13 +388,13 @@ public class Player : MonoBehaviour
         atkCurTime += Time.deltaTime;
     }
 
-    void AttackingAnime(){          //공격 애니메이션
-        ATKAreaView.SetActive(true);
-        Invoke("AttackEndAnime", 0.4f);
-    }
-    void AttackEndAnime(){          //공격 애니메이션
-        ATKAreaView.SetActive(false);
-    }
+    // void AttackingAnime(){          //공격 애니메이션
+    //     ATKAreaView.SetActive(true);
+    //     Invoke("AttackEndAnime", 0.4f);
+    // }
+    // void AttackEndAnime(){          //공격 애니메이션
+    //     ATKAreaView.SetActive(false);
+    // }
 
 
 
@@ -457,6 +459,7 @@ public class Player : MonoBehaviour
         gameManager.playerCurHP = curHP;
         gameManager.playerCurMP = curMP;
         gameManager.playerCurExp = curExp;
+        gameManager.playerLevel = playerLevel;
         if(isCharging){
             gameManager.playerCurCharging = charging;
         }

@@ -15,6 +15,8 @@ public class UIController : MonoBehaviour
     public Text mpText;
     public Text chargingText;
     public Text expText;
+    public Text playerLevelText;
+    public float playerLevel;
     public float playerMaxHP;
     public float playerCurHP;
     public bool playerIsDamaged;
@@ -37,6 +39,7 @@ public class UIController : MonoBehaviour
         SetMP();
         SetExp();
         setCharging();
+        SetLevelText();
     }
 
     public void setHP(){
@@ -75,6 +78,10 @@ public class UIController : MonoBehaviour
         }
     }
 
+    public void SetLevelText(){
+        playerLevelText.text = "Lv. " + playerLevel;
+    }
+
     public void NotEnoughMPAni(){
         if(mpAniCycle < mpAniCycleMax){
             MPBarAniRed();
@@ -82,6 +89,7 @@ public class UIController : MonoBehaviour
             mpAniCycle = 0;
         }
     }
+
     public void MPBarAniRed(){
         mpBarBack.color = new Color(255/255, 125/255, 125/255, 1);
         Invoke("MPBarAniGrey", 0.1f);

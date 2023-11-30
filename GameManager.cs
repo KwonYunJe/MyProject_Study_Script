@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     public GameObject Enemy;
     public GameObject uiController;
     public int score;
+    public float playerLevel;
     public float playerMaxHP;
     public float playerCurHP;
     public float playerDamagedHP;
@@ -52,6 +53,7 @@ public class GameManager : MonoBehaviour
         SetUICont_MP();
         SetUICont_Charging();
         SetUICont_Exp();
+        SetUICont_Level();
     }
     public void SetUICont_HP(){
         uiController.GetComponent<UIController>().playerMaxHP = playerMaxHP;
@@ -68,6 +70,9 @@ public class GameManager : MonoBehaviour
     public void SetUICont_Exp(){
         uiController.GetComponent<UIController>().playerMaxExp = playerMaxExp;
         uiController.GetComponent<UIController>().playerCurExp = playerCurExp;
+    }
+    public void SetUICont_Level(){
+        uiController.GetComponent<UIController>().playerLevel = playerLevel;
     }
     public void NotEnoughMP(){
         uiController.GetComponent<UIController>().NotEnoughMPAni();
