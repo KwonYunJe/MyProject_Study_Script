@@ -94,10 +94,10 @@ public class Player : MonoBehaviour
     private void Update() {
         FaceDir();
         Attack();
-        AttackTime();
+        Weapon_Attack.waInstance.AttackTime();
         Dash();
         DetectSlope();
-        DetectCharging();
+        Weapon_Attack.waInstance.DetectCharging();
         GroundCheck1();
         OnOffDetectGround();
         FlipSP();
@@ -193,42 +193,6 @@ public class Player : MonoBehaviour
             isGround1 = false;
         }
     }
-
-    /*
-    void BodySense(){
-        RaycastHit2D isHeadSense = Physics2D.CircleCast(Head.transform.position, Head.transform.localScale.x, Vector2.zero, 0, LayerMask.GetMask("groundMask") );
-        RaycastHit2D isBodySense = Physics2D.BoxCast(Body.transform.position, Head.transform.localScale, 0, Vector2.zero, 0, LayerMask.GetMask("groundMask") );
-        RaycastHit2D isLegSense = Physics2D.CircleCast(Leg.transform.position, Leg.transform.localScale.x, Vector2.zero, 0, LayerMask.GetMask("groundMask") );
-        if(isHeadSense){
-            headSense = true;
-        }
-        if(isBodySense){
-            bodySense = true;
-        }
-        if(isLegSense){
-            legSense = true;
-        }
-
-        if(headSense){
-            if(bodySense){
-                if(legSense){
-                    
-                }else{
-                    headSense = false;
-                    bodySense = false;
-                }
-            }else{
-                headSense = false;
-            }
-        }else if(bodySense){
-            if(legSense){
-
-            }else{
-                bodySense = false;
-            }
-        }
-    }
-    */
     
 
     private void Jump()
@@ -290,13 +254,11 @@ public class Player : MonoBehaviour
             if(charging < 3 || failCharging){
                 Debug.Log("일반공격 감지 : " + charging);
                 if(closeEnemy){
-                    //AttackNear();
                     //인스턴스 생성, 함수에 인자 전달(아래 원거리도 동일 적용)
-                    Weapon_Close.wcInstance.AttackNear(atkPos, atkBoxSize, weaponDmgClose);
+                    Weapon_Attack.waInstance.AttackNear(atkPos, atkBoxSize, weaponDmgClose);
                 }else{
                     if(failCharging == false){
-                        //AttackShoot();
-                        Waepon_Away.waInstance.AttackShoot(bullet, face, weaponDmgAway);
+                        Weapon_Attack.waInstance.AttackShoot(bullet, face, weaponDmgAway);
                     }else{
                         failCharging = false;
                     }
@@ -305,108 +267,11 @@ public class Player : MonoBehaviour
                 charging = 0;
             }else{
                 Debug.Log("차징샷 감지 : " + charging);
-                isCharging = false;     //충전 상태 off
-                isCharginAtk = true;    //공격 상태 on
-                //AttackChargingShoot();
-                Waepon_Away.waInstance.AttackChargingShoot(curMP, chargingCost, face, chargingBullet, charging, weaponDmgAway, chargingAtkTime);
-                atkCurTime = 0;
-                charging = 0;
+                Weapon_Attack.waInstance.AttackChargingShoot(curMP, chargingCost, face, chargingBullet, charging, weaponDmgAway, chargingAtkTime);
             }
         }
 
-        // if(Input.GetKey("z") && atkCurTime > atkMaxTime){
-        //     DetectCharging();
-        //     Debug.Log("key입력중 감지");
-        //     if(Input.GetKeyUp("z") && charging < 10){
-        //         Debug.Log("일반공격 감지 : " + charging);
-        //         if(closeEnemy){
-        //             AttackNear();
-        //         }else{
-        //             AttackShoot();
-        //         }
-        //         atkCurTime = 0;
-        //         charging = 0;
-        //     }else if(charging >= 10 && Input.GetKeyUp("z")){
-        //         Debug.Log("차징샷 감지 : " + charging);
-        //         AttackChargingShoot();
-        //         atkCurTime = 0;
-        //         charging = 0;
-        //     }
-        //     // atkCurTime = 0;
-        //     // charging = 0;
-        // }
     }
-
-    void DetectCharging(){
-        if(Input.GetKey("z") && !isCharginAtk){
-            charging = charging + 0.05f;
-            if(charging >= 3){
-                if(curMP - chargingCost >= 0){          //마나가 충분할 때
-                    isCharging = true;  //충전 상태 on
-                    if(charging > chargingMax){
-                        charging = chargingMax;
-                    }
-                }else if(failCharging == false && curMP - chargingCost < 0){  //공격에 필요한 마나가 부족할 때 
-                    failCharging = true;
-                    charging = 0;
-                    Debug.Log("Not enough MP!");
-                    gameManager.NotEnoughMP();
-                }
-            }
-           //Debug.Log(charging);
-        }
-    }
-
-    // public void EndAttackChargingShoot(){
-    //     isCharginAtk = false;
-    //     gameManager.playerCurCharging = 0;
-    // }
-
-    void AttackTime(){      //공격시간 연산
-        atkCurTime += Time.deltaTime;
-    }
-
-    // void AttackNear(){          //공격
-    //     AttackingAnime();   //공격 애니메이션
-    //     Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(atkPos.position, atkBoxSize, 0); //OverlapBoxAll(position, size, angle) 배열을 생성하고 감지된 오브젝트를 모두 담는다
-    //     foreach(Collider2D collider in collider2Ds){                                        
-    //         if(collider.tag == "Enemy"){
-    //             gameManager.AtkToEnemy(weaponDmgClose, collider);    //감지된 적과 공격력을 매개변수로 gameManager의 AtkToEnemy함수를 호출
-                
-    //         }else if(collider.tag != "Enemy"){
-                
-    //         }
-    //     }
-    // }
-
-    // void AttackShoot(){         //원거리 공격
-    //     GameObject shootBullet = Instantiate(bullet, transform.position, transform.rotation);   //탄막 생성
-    //     shootBullet.GetComponent<Bullet>().dir = face;      //탄막 방향
-    //     shootBullet.GetComponent<Bullet>().bulletDamage = weaponDmgAway;    //탄막 데미지
-    // }
-
-    // void AttackChargingShoot(){
-    //     Debug.Log("ChargShoot!");
-    //     curMP = curMP - chargingCost;
-    //     float bulletPositionX = transform.position.x + face * chargingBullet.transform.localScale.x/2 ; //샷 생성 위치 조정
-    //     GameObject chargingShootBullet = Instantiate(chargingBullet, new Vector2(bulletPositionX, transform.position.y), transform.rotation);   //탄막 생성
-    //     chargingShootBullet.GetComponent<Bullet_Charging>().charging = charging * 0.05f;            //차징샷 크기 
-    //     chargingShootBullet.GetComponent<Bullet_Charging>().bulletDamage = weaponDmgAway;           //탄막 데미지
-    //     chargingShootBullet.GetComponent<Bullet_Charging>().chargingAtkTime = chargingAtkTime;      //탄막 유지시간
-    //     Invoke("EndAttackChargingShoot", chargingAtkTime);                                          //탄막 유지시간이 다 되면 공격상태 off
-    // }
-
-
-
-    // void AttackingAnime(){          //공격 애니메이션
-    //     ATKAreaView.SetActive(true);
-    //     Invoke("AttackEndAnime", 0.4f);
-    // }
-    // void AttackEndAnime(){          //공격 애니메이션
-    //     ATKAreaView.SetActive(false);
-    // }
-
-
 
     void FaceDir(){
         //캐릭터 x좌표 - 공격박스 x좌표 

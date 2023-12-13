@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager gmInstance;    //싱글톤 인스턴스
     public GameObject player;
     public GameObject coinBox;
     public GameObject Enemy;
@@ -23,6 +24,11 @@ public class GameManager : MonoBehaviour
     public float expByEnemy;
 
 
+    private void Awake() {
+        if(GameManager.gmInstance == null){
+            GameManager.gmInstance = this;
+        }
+    }
 
     private void Update() {
         SetUICont();
