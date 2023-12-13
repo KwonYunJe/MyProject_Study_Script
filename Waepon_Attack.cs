@@ -25,6 +25,53 @@ public class Weapon_Attack : MonoBehaviour
         
     }
 
+        public void Attack(){
+
+        Rigidbody2D rigid = Player.playerInstance.rigid;
+        Transform atkPos = Player.playerInstance.atkPos;
+        Vector2 atkBoxSize = Player.playerInstance.atkBoxSize;
+        GameObject bullet = Player.playerInstance.bullet;
+        GameObject chargingBullet = Player.playerInstance.chargingBullet;
+        bool isCharginAtk = Player.playerInstance.isCharginAtk;
+        bool failCharging = Player.playerInstance.failCharging;
+        float face = Player.playerInstance.face;
+        float attackRange = Player.playerInstance.attackRange;
+        float atkCurTime = Player.playerInstance.atkCurTime;
+        float atkMaxTime = Player.playerInstance.atkMaxTime;       
+        float charging = Player.playerInstance.charging;       
+        float weaponDmgClose = Player.playerInstance.weaponDmgClose;
+        float weaponDmgAway = Player.playerInstance.weaponDmgAway;        
+        float curMP = Player.playerInstance.curMP;
+        float chargingCost = Player.playerInstance.chargingCost;        
+        float chargingAtkTime = Player.playerInstance.chargingAtkTime;
+
+        //Range
+        RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, attackRange, LayerMask.GetMask("Enemy"));
+        Debug.DrawRay(rigid.position, Vector2.right * face * attackRange, Color.magenta);
+
+        if(Input.GetKeyUp("z") && atkCurTime > atkMaxTime && !isCharginAtk){
+            if(charging < 3 || failCharging){
+                Debug.Log("일반공격 감지 : " + charging);
+                if(closeEnemy){
+                    //인스턴스 생성, 함수에 인자 전달(아래 원거리도 동일 적용)
+                    Weapon_Attack.waInstance.AttackNear(atkPos, atkBoxSize, weaponDmgClose);
+                }else{
+                    if(failCharging == false){
+                        Weapon_Attack.waInstance.AttackShoot(bullet, face, weaponDmgAway);
+                    }else{
+                        failCharging = false;
+                    }
+                }
+                atkCurTime = 0;
+                charging = 0;
+            }else{
+                Debug.Log("차징샷 감지 : " + charging);
+                Weapon_Attack.waInstance.AttackChargingShoot(curMP, chargingCost, face, chargingBullet, charging, weaponDmgAway, chargingAtkTime);
+            }
+        }
+
+    }
+
     public void AttackTime(){      //공격시간 연산
         Player.playerInstance.atkCurTime += Time.deltaTime;
     }

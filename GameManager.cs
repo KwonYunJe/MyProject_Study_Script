@@ -87,9 +87,11 @@ public class GameManager : MonoBehaviour
 
     //적 사망시 이벤트////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public void EnemyDeadEvent(GameObject enemy){
+        Debug.Log("Enemy dead envet start");
         ExpToPlayer(enemy.GetComponent<Enemy>().enemyLevel);
     }
-        public void ExpToPlayer(float exp){
-        player.GetComponent<Player>().GetExp(exp);
+    public void ExpToPlayer(float exp){
+        Debug.Log("Exp send to player. exp : " + exp);
+        Player_Interaction.playerInter.GetExp(exp);
     }
 }

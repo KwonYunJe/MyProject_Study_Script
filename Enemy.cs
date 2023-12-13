@@ -216,6 +216,7 @@ public class Enemy : MonoBehaviour
         if(hp > weaponDmg){
             hp = hp-weaponDmg;
         }else{
+            Debug.Log("Enemy is dead");
             gameManager.EnemyDeadEvent(gameObject);
             Destroy1st();
             startDestroy = true;

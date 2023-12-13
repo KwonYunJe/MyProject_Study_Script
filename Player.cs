@@ -9,8 +9,8 @@ public class Player : MonoBehaviour
 {
     public static Player playerInstance;    //싱글톤 인스턴스
     //public GameObject weapon_Close;
-    Rigidbody2D rigid;
-    SpriteRenderer sprender;
+    public Rigidbody2D rigid;
+    public SpriteRenderer sprender;
     public Transform checkPos;
     public GameManager gameManager;
     public GameObject bullet;
@@ -93,7 +93,7 @@ public class Player : MonoBehaviour
 
     private void Update() {
         FaceDir();
-        Attack();
+        Weapon_Attack.waInstance.Attack();
         Weapon_Attack.waInstance.AttackTime();
         Dash();
         DetectSlope();
@@ -235,43 +235,43 @@ public class Player : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D other){
         if(other.gameObject.tag == "Coin"){
-            GetCoin(other);
+            Player_Interaction.playerInter.GetCoin(other);
         }
         if(other.gameObject.tag == "Enemy"){
-            Damaged(other);
+            Player_Interaction.playerInter.Damaged(other);
         }
 
     }
 
 
     //공격  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    void Attack(){
-        //Range
-        RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, attackRange, LayerMask.GetMask("Enemy"));
-        Debug.DrawRay(rigid.position, Vector2.right * face * attackRange, Color.magenta);
+    // void Attack(){
+    //     //Range
+    //     RaycastHit2D closeEnemy = Physics2D.Raycast(rigid.position, Vector2.right * face, attackRange, LayerMask.GetMask("Enemy"));
+    //     Debug.DrawRay(rigid.position, Vector2.right * face * attackRange, Color.magenta);
 
-        if(Input.GetKeyUp("z") && atkCurTime > atkMaxTime && !isCharginAtk){
-            if(charging < 3 || failCharging){
-                Debug.Log("일반공격 감지 : " + charging);
-                if(closeEnemy){
-                    //인스턴스 생성, 함수에 인자 전달(아래 원거리도 동일 적용)
-                    Weapon_Attack.waInstance.AttackNear(atkPos, atkBoxSize, weaponDmgClose);
-                }else{
-                    if(failCharging == false){
-                        Weapon_Attack.waInstance.AttackShoot(bullet, face, weaponDmgAway);
-                    }else{
-                        failCharging = false;
-                    }
-                }
-                atkCurTime = 0;
-                charging = 0;
-            }else{
-                Debug.Log("차징샷 감지 : " + charging);
-                Weapon_Attack.waInstance.AttackChargingShoot(curMP, chargingCost, face, chargingBullet, charging, weaponDmgAway, chargingAtkTime);
-            }
-        }
+    //     if(Input.GetKeyUp("z") && atkCurTime > atkMaxTime && !isCharginAtk){
+    //         if(charging < 3 || failCharging){
+    //             Debug.Log("일반공격 감지 : " + charging);
+    //             if(closeEnemy){
+    //                 //인스턴스 생성, 함수에 인자 전달(아래 원거리도 동일 적용)
+    //                 Weapon_Attack.waInstance.AttackNear(atkPos, atkBoxSize, weaponDmgClose);
+    //             }else{
+    //                 if(failCharging == false){
+    //                     Weapon_Attack.waInstance.AttackShoot(bullet, face, weaponDmgAway);
+    //                 }else{
+    //                     failCharging = false;
+    //                 }
+    //             }
+    //             atkCurTime = 0;
+    //             charging = 0;
+    //         }else{
+    //             Debug.Log("차징샷 감지 : " + charging);
+    //             Weapon_Attack.waInstance.AttackChargingShoot(curMP, chargingCost, face, chargingBullet, charging, weaponDmgAway, chargingAtkTime);
+    //         }
+    //     }
 
-    }
+    // }
 
     void FaceDir(){
         //캐릭터 x좌표 - 공격박스 x좌표 
@@ -302,27 +302,27 @@ public class Player : MonoBehaviour
         
     }
     //피격  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    void Damaged(Collision2D other){     //적에게 맞았을 때
-        float damage = gameManager.DamagedFromEnemy(other);
-        gameObject.layer = 9;
-        sprender.color = new Color( 120/255f , 120/255f, 120/255f);
-        if(damage <= def / 15){
-            curHP = curHP - 0;
-        }else{
-            if(curHP > curHP - (damage - def / 15)){
-                curHP = curHP - (damage - def / 15);//플레이어 체력감소
-                gameManager.playerDamagedHP = curHP;//감소된 체력을 gamemanger로 전달
-            }else{
-                //Destroy
-            }
-        }
-        Invoke("OffDamaged", 0.5f); 
-    }
+    // void Damaged(Collision2D other){     //적에게 맞았을 때
+    //     float damage = gameManager.DamagedFromEnemy(other);
+    //     gameObject.layer = 9;
+    //     sprender.color = new Color( 120/255f , 120/255f, 120/255f);
+    //     if(damage <= def / 15){
+    //         curHP = curHP - 0;
+    //     }else{
+    //         if(curHP > curHP - (damage - def / 15)){
+    //             curHP = curHP - (damage - def / 15);//플레이어 체력감소
+    //             gameManager.playerDamagedHP = curHP;//감소된 체력을 gamemanger로 전달
+    //         }else{
+    //             //Destroy
+    //         }
+    //     }
+    //     Invoke("OffDamaged", 0.5f); 
+    // }
 
-    void OffDamaged(){
-        gameObject.layer = 3;
-        sprender.color = new Color(0,0,0);
-    }
+    // void OffDamaged(){
+    //     gameObject.layer = 3;
+    //     sprender.color = new Color(0,0,0);
+    // }
     // 상호작용///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void FirstSend(){
         gameManager.playerMaxHP = maxHP;
@@ -339,24 +339,24 @@ public class Player : MonoBehaviour
             gameManager.playerCurCharging = charging;
         }
     }
-    void GetCoin(Collision2D other){    //코인 획득 시
-        if(other.gameObject.name == "GoldCoin(Clone)"){
-                gameManager.GetGoldCoin();
-            }else if(other.gameObject.name == "SilverCoin(Clone)"){
-                gameManager.GetSilverCoin();
-            }
-            Destroy(other.gameObject);
-    }
+    // void GetCoin(Collision2D other){    //코인 획득 시
+    //     if(other.gameObject.name == "GoldCoin(Clone)"){
+    //             gameManager.GetGoldCoin();
+    //         }else if(other.gameObject.name == "SilverCoin(Clone)"){
+    //             gameManager.GetSilverCoin();
+    //         }
+    //         Destroy(other.gameObject);
+    // }
 
-    public void GetExp(float exp){
-        curExp = curExp + exp;
-        if(curExp >= maxExp){
-            curExp = curExp - maxExp;                                           //경험치 초과분
-            maxExp = maxExp + maxExp * 0.3f;                                    //최대 경험치 갱신
-            gameManager.playerMaxExp = maxExp;                                  //gm의 최대 경험치 갱신
-            playerLevel++;
-        }
-    }
+    // public void GetExp(float exp){
+    //     curExp = curExp + exp;
+    //     if(curExp >= maxExp){
+    //         curExp = curExp - maxExp;                                           //경험치 초과분
+    //         maxExp = maxExp + maxExp * 0.3f;                                    //최대 경험치 갱신
+    //         gameManager.playerMaxExp = maxExp;                                  //gm의 최대 경험치 갱신
+    //         playerLevel++;
+    //     }
+    // }
 
 
     private void OnDrawGizmos() {   
