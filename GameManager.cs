@@ -92,6 +92,6 @@ public class GameManager : MonoBehaviour
     }
     public void ExpToPlayer(float exp){
         Debug.Log("Exp send to player. exp : " + exp);
-        Player_Interaction.playerInter.GetExp(exp);
+        player.GetComponent<Player>().GetExp(exp);
     }
 }

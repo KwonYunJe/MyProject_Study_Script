@@ -4,13 +4,16 @@ using UnityEngine;
 
 public class Player_Interaction : MonoBehaviour
 {
-    public static Player_Interaction playerInter;
+    // public static Player_Interaction playerInter;
 
-    private void Awake() {
-        if(Player_Interaction.playerInter == null){
-            Player_Interaction.playerInter = this;
-        }
-    }
+    // private void Awake() {
+    //     Debug.Log("This is pInteraction Awake");
+    //     if(Player_Interaction.playerInter == null){
+    //         Debug.Log("pInter instance start");
+    //         Player_Interaction.playerInter = this;
+    //         Debug.Log("pInter instance end");
+    //     }
+    // }
 
     // Start is called before the first frame update
     void Start()
@@ -25,9 +28,10 @@ public class Player_Interaction : MonoBehaviour
     }
 
     public void Damaged(Collision2D other){     //적에게 맞았을 때
-        SpriteRenderer sprender = Player.playerInstance.sprender;
-        float def = Player.playerInstance.def;
-        float curHP = Player.playerInstance.curHP;
+        Debug.Log("Damaged!!");
+        SpriteRenderer sprender = GetComponent<Player>().sprender;
+        float def = GetComponent<Player>().def;
+        float curHP = GetComponent<Player>().curHP;
         float damage = GameManager.gmInstance.DamagedFromEnemy(other);
         gameObject.layer = 9;
         sprender.color = new Color( 120/255f , 120/255f, 120/255f);
@@ -45,18 +49,18 @@ public class Player_Interaction : MonoBehaviour
     }
 
     void OffDamaged(){
-        Player.playerInstance.gameObject.layer = 3;
-        Player.playerInstance.sprender.color = new Color(0,0,0);
+        GetComponent<Player>().gameObject.layer = 3;
+        GetComponent<Player>().sprender.color = new Color(0,0,0);
     }
 
-    public void GetExp(float exp){      //경험치 획득 - GM에 의해 호출된다. 
+    public void GetExp(float expByGM){      //경험치 획득
         Debug.Log("Sum exp");
-        Player.playerInstance.curExp = Player.playerInstance.curExp + exp;
-        if(Player.playerInstance.curExp >= Player.playerInstance.maxExp){
-            Player.playerInstance.curExp = Player.playerInstance.curExp - Player.playerInstance.maxExp;                                           //경험치 초과분
-            Player.playerInstance.maxExp = Player.playerInstance.maxExp + Player.playerInstance.maxExp * 0.3f;                                    //최대 경험치 갱신
-            GameManager.gmInstance.playerMaxExp = Player.playerInstance.maxExp;                                  //gm의 최대 경험치 갱신
-            Player.playerInstance.playerLevel++;
+        GetComponent<Player>().curExp = GetComponent<Player>().curExp + expByGM;
+        if(GetComponent<Player>().curExp >= GetComponent<Player>().maxExp){
+            GetComponent<Player>().curExp = GetComponent<Player>().curExp - GetComponent<Player>().maxExp;                                           //경험치 초과분
+            GetComponent<Player>().maxExp = GetComponent<Player>().maxExp + GetComponent<Player>().maxExp * 0.3f;                                    //최대 경험치 갱신
+            GameManager.gmInstance.playerMaxExp = GetComponent<Player>().maxExp;                                  //gm의 최대 경험치 갱신
+            GetComponent<Player>().playerLevel++;
         }
     }
 
